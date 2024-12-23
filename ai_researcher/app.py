@@ -388,7 +388,7 @@ def fresh(cache_dir, topic):
     link = get_download_links(cache_dir, topic)
     return download_links_display(link)
 
-with gr.Blocks(title="AI Researcher Spark") as demo:
+with gr.Blocks(title="科研小点子（AI Researcher Spark）") as demo:
     with gr.Row():
         # 左侧放置较小宽度，用于显示 Logo
         with gr.Column(scale=1, min_width=80):
