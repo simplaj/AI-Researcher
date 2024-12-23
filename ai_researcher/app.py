@@ -11,7 +11,7 @@ def execute_command(command, env=None):
         yield line
     process.wait()
     if process.returncode != 0:
-        yield f"命令失败，退出代码 {process.returncode}\n"
+        yield f"**<span style='color:red;'>命令失败，退出代码 {process.returncode}</span>**\n"
 
 def run_workflow(
     api_key,
@@ -24,6 +24,8 @@ def run_workflow(
     run_idea_gen,
     run_dedup,
     run_proposal_gen,
+    run_proposal_ranking,
+    run_proposal_filtering,
     ideas_n,
     methods,
     rag_values,
@@ -33,8 +35,13 @@ def run_workflow(
 ):
     """
     执行整个工作流程的函数。
-    使用生成器函数实时输出日志。
+    使用生成器函数实时输出日志和更新进度。
     """
+    log = ""  # 用于累积日志
+    # 计算总步骤数
+    total_steps = sum([run_lit_review, run_idea_gen, run_dedup, run_proposal_gen, run_proposal_ranking, run_proposal_filtering])
+    current_step = 0
+
     # 创建基于主题的缓存目录
     sanitized_topic = "_".join(topic.strip().split(" "))
     topic_cache_dir = base_cache_dir
@@ -43,6 +50,8 @@ def run_workflow(
     dedup_cache_dir = os.path.join(topic_cache_dir, "ideas_dedup")
     project_proposal_cache_dir = os.path.join(topic_cache_dir, "project_proposals")
     experiment_plan_cache_dir = os.path.join(project_proposal_cache_dir, sanitized_topic)
+    ranking_score_dir = os.path.join(topic_cache_dir, "ranking")
+    passed_cache_dir = os.path.join(topic_cache_dir, "project_proposals_passed")
 
     # 自动创建必要的目录
     os.makedirs(os.path.join(topic_cache_dir, "lit_review"), exist_ok=True)
@@ -50,6 +59,10 @@ def run_workflow(
     os.makedirs(dedup_cache_dir, exist_ok=True)
     os.makedirs(project_proposal_cache_dir, exist_ok=True)
     os.makedirs(experiment_plan_cache_dir, exist_ok=True)
+    if run_proposal_ranking or run_proposal_filtering:
+        os.makedirs(ranking_score_dir, exist_ok=True)
+    if run_proposal_filtering:
+        os.makedirs(passed_cache_dir, exist_ok=True)
 
     # 设置 API Key 环境变量（如果需要）
     env = os.environ.copy()
@@ -57,9 +70,13 @@ def run_workflow(
         env["API_KEY"] = api_key
     env["HF_ENDPOINT"] = 'https://hf-mirror.com'
 
+    progress = gr.Progress()
     # 步骤 1: 文献综述
     if run_lit_review:
-        yield "### 步骤 1: 文献综述（Literature Review）\n"
+        current_step += 1
+        progress_percentage = (current_step / total_steps) * 100
+        progress(progress_percentage)
+        log += "### 步骤 1: 文献综述（Literature Review）\n"
         lit_review_cmd = [
             "python3", "src/lit_review.py",
             "--engine", engine,
@@ -70,23 +87,33 @@ def run_workflow(
         ]
         if print_all:
             lit_review_cmd.append("--print_all")
-        yield f"运行命令: {' '.join(lit_review_cmd)}\n"
-        yield from execute_command(lit_review_cmd, env=env)
-        yield "文献综述完成。\n\n"
+        log += f"**运行命令:** `{ ' '.join(lit_review_cmd) }`\n"
+        yield log
+        for line in execute_command(lit_review_cmd, env=env):
+            log += line
+            yield log
+        log += "**文献综述完成。**\n\n"
+        yield log
     else:
-        yield "### 步骤 1: 文献综述（Literature Review）已跳过。\n\n"
+        log += "### 步骤 1: 文献综述（Literature Review）已跳过。\n\n"
+        yield log
 
     # 步骤 2: 生成有依据的创意
     if run_idea_gen:
         # 检查依赖
         if not run_lit_review and not os.path.exists(paper_cache):
-            yield "⚠️ 跳过步骤 2，因为步骤 1 未运行且缺少必要的文献综述缓存文件。\n\n"
+            log += "**⚠️ 跳过步骤 2，因为步骤 1 未运行且缺少必要的文献综述缓存文件。**\n\n"
+            yield log
         else:
-            yield "### 步骤 2: 生成有依据的创意（Grounded Idea Generation）\n"
+            current_step += 1
+            progress_percentage = (current_step / total_steps) * 100
+            progress(progress_percentage)
+            log += "### 步骤 2: 生成有依据的创意（Grounded Idea Generation）\n"
+            yield log
             for seed in range(1, seeds + 1):
                 for method in [m.strip() for m in methods.split(',')]:
                     for rag in [r.strip() for r in rag_values.split(',')]:
-                        yield f"运行 grounded_idea_gen.py on: {topic} with seed {seed} and RAG={rag}\n"
+                        log += f"**运行** `grounded_idea_gen.py` **主题:** {topic} **种子:** {seed} **RAG:** {rag}\n"
                         grounded_idea_cmd = [
                             "python3", "src/grounded_idea_gen.py",
                             "--engine", engine,
@@ -98,32 +125,47 @@ def run_workflow(
                             "--seed", str(seed),
                             "--RAG", rag
                         ]
-                        yield f"运行命令: {' '.join(grounded_idea_cmd)}\n"
-                        yield from execute_command(grounded_idea_cmd, env=env)
-            yield "生成有依据的创意完成。\n\n"
+                        log += f"**运行命令:** `{ ' '.join(grounded_idea_cmd) }`\n"
+                        yield log
+                        for line in execute_command(grounded_idea_cmd, env=env):
+                            log += line
+                            yield log
+            log += "**生成有依据的创意完成。**\n\n"
+            yield log
     else:
-        yield "### 步骤 2: 生成有依据的创意（Grounded Idea Generation）已跳过。\n\n"
+        log += "### 步骤 2: 生成有依据的创意（Grounded Idea Generation）已跳过。\n\n"
+        yield log
 
     # 步骤 3: 创意去重
     if run_dedup:
         # 检查依赖
         if not run_idea_gen and not os.path.exists(idea_cache):
-            yield "⚠️ 跳过步骤 3，因为步骤 2 未运行且缺少必要的创意缓存文件。\n\n"
+            log += "**⚠️ 跳过步骤 3，因为步骤 2 未运行且缺少必要的创意缓存文件。**\n\n"
+            yield log
         else:
-            yield "### 步骤 3: 创意去重（Idea Deduplication）\n"
+            current_step += 1
+            progress_percentage = (current_step / total_steps) * 100
+            progress(progress_percentage)
+            log += "### 步骤 3: 创意去重（Idea Deduplication）\n"
+            yield log
+
             # 分析语义相似性
-            yield f"运行 analyze_ideas_semantic_similarity.py with cache_name: {topic}\n"
+            log += f"**运行** `analyze_ideas_semantic_similarity.py` **主题:** {topic}\n"
             analyze_cmd = [
                 "python3", "src/analyze_ideas_semantic_similarity.py",
                 "--cache_dir", os.path.join(topic_cache_dir, "seed_ideas"),
                 "--cache_name", sanitized_topic,
                 "--save_similarity_matrix"
             ]
-            yield f"运行命令: {' '.join(analyze_cmd)}\n"
-            yield from execute_command(analyze_cmd, env=env)
+            log += f"**运行命令:** `{ ' '.join(analyze_cmd) }`\n"
+            yield log
+
+            for line in execute_command(analyze_cmd, env=env):
+                log += line
+                yield log
 
             # 进行去重
-            yield f"运行 dedup_ideas.py with cache_name: {topic}\n"
+            log += f"**运行** `dedup_ideas.py` **主题:** {topic}\n"
             dedup_cmd = [
                 "python3", "src/dedup_ideas.py",
                 "--cache_dir", os.path.join(topic_cache_dir, "seed_ideas"),
@@ -131,19 +173,32 @@ def run_workflow(
                 "--dedup_cache_dir", dedup_cache_dir,
                 "--similarity_threshold", str(similarity_threshold)
             ]
-            yield f"运行命令: {' '.join(dedup_cmd)}\n"
-            yield from execute_command(dedup_cmd, env=env)
-            yield "创意去重完成。\n\n"
+            log += f"**运行命令:** `{ ' '.join(dedup_cmd) }`\n"
+            yield log
+
+            for line in execute_command(dedup_cmd, env=env):
+                log += line
+                yield log
+
+            log += "**创意去重完成。**\n\n"
+            yield log
     else:
-        yield "### 步骤 3: 创意去重（Idea Deduplication）已跳过。\n\n"
+        log += "### 步骤 3: 创意去重（Idea Deduplication）已跳过。\n\n"
+        yield log
 
     # 步骤 4: 项目提案生成
     if run_proposal_gen:
         # 检查依赖
         if not run_dedup and not os.path.exists(dedup_cache_dir):
-            yield "⚠️ 跳过步骤 4，因为步骤 3 未运行且缺少必要的去重缓存目录。\n\n"
+            log += "**⚠️ 跳过步骤 4，因为步骤 3 未运行且缺少必要的去重缓存目录。**\n\n"
+            yield log
         else:
-            yield "### 步骤 4: 项目提案生成（Project Proposal Generation）\n"
+            current_step += 1
+            progress_percentage = (current_step / total_steps) * 100
+            progress(progress_percentage)
+            log += "### 步骤 4: 项目提案生成（Project Proposal Generation）\n"
+            yield log
+
             experiment_cmd = [
                 "python3", "src/experiment_plan_gen.py",
                 "--engine", engine,
@@ -154,15 +209,103 @@ def run_workflow(
                 "--seed", str(seed_pp),
                 "--method", "prompting"
             ]
-            yield f"运行命令: {' '.join(experiment_cmd)}\n"
-            yield from execute_command(experiment_cmd, env=env)
-            # yield "项目提案生成完成。\n\n"
-    else:
-        yield "### 步骤 4: 项目提案生成（Project Proposal Generation）已跳过。\n\n"
+            log += f"**运行命令:** `{ ' '.join(experiment_cmd) }`\n"
+            yield log
 
-    # 注意：跳过排名和过滤步骤以节省成本
-    # yield "### 工作流程完成。\n"
-    # yield "**注意**：项目提案排名和过滤步骤已跳过。如需执行这些步骤，请手动添加相关脚本和界面组件。"
+            for line in execute_command(experiment_cmd, env=env):
+                log += line
+                yield log
+
+            log += "**项目提案生成完成。**\n\n"
+            yield log
+    else:
+        log += "### 步骤 4: 项目提案生成（Project Proposal Generation）已跳过。\n\n"
+        yield log
+
+    # 步骤 5: 项目提案排名
+    if run_proposal_ranking:
+        # 检查依赖
+        if not run_proposal_gen and not os.path.exists(experiment_plan_cache_dir):
+            log += "**⚠️ 跳过步骤 5，因为步骤 4 未运行且缺少必要的项目提案缓存目录。**\n\n"
+            yield log
+        else:
+            current_step += 1
+            progress_percentage = (current_step / total_steps) * 100
+            progress(progress_percentage)
+            log += "### 步骤 5: 项目提案排名（Project Proposal Ranking）\n"
+            yield log
+
+            ranking_score_dir = os.path.join(topic_cache_dir, "ranking")
+            cache_names = ["factuality_prompting_method"]  # 可以根据需要动态生成
+
+            for cache_name in cache_names:
+                log += f"**运行** `tournament_ranking.py` **cache_name:** {cache_name}\n"
+                tournament_ranking_cmd = [
+                    "python3", "src/tournament_ranking.py",
+                    "--engine", engine,
+                    "--experiment_plan_cache_dir", project_proposal_cache_dir + '/',
+                    "--cache_name", cache_name,
+                    "--ranking_score_dir", ranking_score_dir,
+                    "--max_round", "5"
+                ]
+                log += f"**运行命令:** `{ ' '.join(tournament_ranking_cmd) }`\n"
+                yield log
+
+                for line in execute_command(tournament_ranking_cmd, env=env):
+                    log += line
+                    yield log
+            
+            log += "**项目提案排名完成。**\n\n"
+            yield log
+    else:
+        log += "### 步骤 5: 项目提案排名（Project Proposal Ranking）已跳过。\n\n"
+        yield log
+
+    # 步骤 6: 项目提案过滤
+    if run_proposal_filtering:
+        # 检查依赖
+        if not run_proposal_ranking and not os.path.exists(os.path.join(ranking_score_dir, "factuality_prompting_method", "round_5.json")):
+            log += "**⚠️ 跳过步骤 6，因为步骤 5 未运行且缺少必要的排名分数文件。**\n\n"
+            yield log
+        else:
+            current_step += 1
+            progress_percentage = (current_step / total_steps) * 100
+            progress(progress_percentage)
+            log += "### 步骤 6: 项目提案过滤（Project Proposal Filtering）\n"
+            yield log
+
+            cache_dir = project_proposal_cache_dir + '/'
+            passed_cache_dir = os.path.join(topic_cache_dir, "project_proposals_passed")
+            cache_names = ["factuality_prompting_method"]  # 可以根据需要动态生成
+
+            for cache_name in cache_names:
+                log += f"**运行** `filter_ideas.py` **cache_name:** {cache_name}\n"
+                filter_ideas_cmd = [
+                    "python3", "src/filter_ideas.py",
+                    "--engine", engine,
+                    "--cache_dir", cache_dir,
+                    "--cache_name", cache_name,
+                    "--passed_cache_dir", passed_cache_dir,
+                    "--score_file", f"{ranking_score_dir}/{cache_name}/round_5.json"
+                ]
+                log += f"**运行命令:** `{ ' '.join(filter_ideas_cmd) }`\n"
+                yield log
+
+                for line in execute_command(filter_ideas_cmd, env=env):
+                    log += line
+                    yield log
+            
+            log += "**项目提案过滤完成。**\n\n"
+            yield log
+    else:
+        log += "### 步骤 6: 项目提案过滤（Project Proposal Filtering）已跳过。\n\n"
+        yield log
+
+    # 更新进度条到100%
+    progress(100)
+    # log += "### 工作流程完成。\n"
+    # log += "**注意**：项目提案排名和过滤步骤已跳过。如需执行这些步骤，请手动添加相关脚本和界面组件。"
+    yield log
 
 with gr.Blocks() as demo:
     gr.Markdown("# 项目自动化流程可视化界面")
@@ -249,14 +392,25 @@ with gr.Blocks() as demo:
                 value=True
             )
 
+            gr.Markdown("## 项目提案排名设置")
+            run_proposal_ranking = gr.Checkbox(
+                label="运行项目提案排名",
+                value=False
+            )
+
+            gr.Markdown("## 项目提案过滤设置")
+            run_proposal_filtering = gr.Checkbox(
+                label="运行项目提案过滤",
+                value=False
+            )
+
             run_workflow_btn = gr.Button("运行整个工作流程")
 
         with gr.Column(scale=2):
             gr.Markdown("## 执行日志")
-            output = gr.Textbox(
-                label="输出日志",
-                lines=30,
-                interactive=False
+            # 使用 Markdown 组件以支持丰富的文本格式
+            output = gr.Markdown(
+                value=""
             )
 
     run_workflow_btn.click(
@@ -272,6 +426,8 @@ with gr.Blocks() as demo:
             run_idea_gen,
             run_dedup,
             run_proposal_gen,
+            run_proposal_ranking,
+            run_proposal_filtering,
             ideas_n,
             methods,
             rag_values,
