@@ -320,7 +320,7 @@ def run_workflow(
     # 步骤 6: 科研计划过滤
     if run_proposal_filtering:
         # 检查依赖
-        if not run_proposal_ranking and not os.path.exists(os.path.join(ranking_score_dir, "factuality_prompting_method", "round_5.json")):
+        if not run_proposal_ranking and not os.path.exists(os.path.join(ranking_score_dir, sanitized_topic, "round_5.json")):
             log += "**⚠️ 跳过步骤 6，因为步骤 5 未运行且缺少必要的排名分数文件。**\n\n"
             yield [log, result_json]
         else:
@@ -332,26 +332,25 @@ def run_workflow(
 
             cache_dir = project_proposal_cache_dir + '/'
             passed_cache_dir = os.path.join(topic_cache_dir, "project_proposals_passed")
-            cache_names = ["factuality_prompting_method"]  # 可以根据需要动态生成
 
-            for cache_name in cache_names:
-                log += f"**运行** `filter_ideas.py` **cache_name:** {cache_name}\n"
-                filter_ideas_cmd = [
-                    "python3", "src/filter_ideas.py",
-                    "--engine", engine,
-                    "--cache_dir", cache_dir,
-                    "--cache_name", cache_name,
-                    "--passed_cache_dir", passed_cache_dir,
-                    "--score_file", f"{ranking_score_dir}/{cache_name}/round_5.json"
-                ]
-                log += f"**运行命令:** `{ ' '.join(filter_ideas_cmd) }`\n"
+            log += f"**运行** `filter_ideas.py` **cache_name:** {sanitized_topic}\n"
+            filter_ideas_cmd = [
+                "python3", "src/filter_ideas.py",
+                "--engine", engine,
+                "--cache_dir", cache_dir,
+                "--cache_name", sanitized_topic,
+                "--passed_cache_dir", passed_cache_dir + '/',
+                "--score_file", f"{ranking_score_dir}/{sanitized_topic}/round_5.json"
+            ]
+            log += f"**运行命令:** `{ ' '.join(filter_ideas_cmd) }`\n"
+            yield [log, result_json]
+
+            for line in execute_command(filter_ideas_cmd, env=env):
+                log += line
                 yield [log, result_json]
-
-                for line in execute_command(filter_ideas_cmd, env=env):
-                    log += line
-                    yield [log, result_json]
             
             log += "**科研计划过滤完成。**\n\n"
+            result_json = display_multiple_json(os.path.join(passed_cache_dir, sanitized_topic))
             yield [log, result_json]
     else:
         log += "### 步骤 6: 科研计划过滤（Project Proposal Filtering）已跳过。\n\n"
