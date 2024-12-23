@@ -76,7 +76,8 @@ if __name__ == "__main__":
     elif "o1" in args.engine or "gpt" in args.engine:
         client = OpenAI(
             organization=ORG_ID,
-            api_key=OAI_KEY
+            api_key=OAI_KEY,
+            base_url=BASE_URL
         )
     else:
         ## we will use Together API for all other models

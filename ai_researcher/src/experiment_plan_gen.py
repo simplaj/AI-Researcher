@@ -63,7 +63,8 @@ if __name__ == "__main__":
     else:
         client = OpenAI(
             organization=ORG_ID,
-            api_key=OAI_KEY
+            api_key=OAI_KEY,
+            base_url=BASE_URL
         )
 
     ## load the demo examples

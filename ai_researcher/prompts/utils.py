@@ -123,7 +123,8 @@ def load_model(model_name):
     else:
         client = OpenAI(
             organization=ORG_ID,
-            api_key=OAI_KEY
+            api_key=OAI_KEY,
+            base_url=BASE_URL
         )
     
     return client
