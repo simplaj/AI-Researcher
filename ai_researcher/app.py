@@ -21,7 +21,7 @@ def display_multiple_json(directory_path):
     """
     all_json_content = ""
     if not os.path.exists(directory_path):
-        return "No passed ideas. Try to increase `batchs per time` or `Run times`"
+        return False
     
     # 遍历目录中的所有 JSON 文件
     for file_name in os.listdir(directory_path):
@@ -364,8 +364,32 @@ def run_workflow(
     # log += "**注意**：科研计划排名和过滤步骤已跳过。如需执行这些步骤，请手动添加相关脚本和界面组件。"
     yield [log, result_json]
 
+def get_download_links(cache_dir, topic):
+    sanitized_topic = "_".join(topic.strip().split(" "))
+    files = {
+        "文献综述": os.path.join(cache_dir, "lit_review", f"{sanitized_topic}.json"),
+        "科研点子": os.path.join(cache_dir, "seed_ideas", f"{sanitized_topic}.json"),
+        "去重点子": os.path.join(cache_dir, "ideas_dedup", f"{sanitized_topic}.json"),
+        "科研计划排名": os.path.join(cache_dir, "ranking", sanitized_topic, "top_ideas.json"),
+    }
+    links = {}
+    for key, path in files.items():
+        if os.path.exists(path):
+            links[key] = path
+    return links
+
+def download_links_display(links):
+    result = []
+    for name, path in links.items():
+        result.append(os.path.abspath(path))
+    return result[0], result[1], result[2], result[3]
+
+def fresh(cache_dir, topic):
+    link = get_download_links(cache_dir, topic)
+    return download_links_display(link)
+
 with gr.Blocks(title="AI Researcher Spark") as demo:
-    gr.Markdown("# 科研点子王(AI Researcher Spark)")
+    gr.Markdown("# 科研小点子(AI Researcher Spark)")
 
     with gr.Row():
         with gr.Column(scale=1):
@@ -476,6 +500,17 @@ with gr.Blocks(title="AI Researcher Spark") as demo:
                 value="",
                 height=900
             )
+            down_btn = gr.Button("生成下载链接")
+            lit = gr.File(label='文献综述', show_label=True)
+            ideas = gr.File(label='科研点子')
+            idea_dedup = gr.File(label='去重点子')
+            ranking = gr.File(label='科研计划排名')
+            
+    down_btn.click(
+        fresh,
+        inputs=[base_cache_dir, topic],
+        outputs=[lit, ideas, idea_dedup, ranking]
+    )
 
     run_workflow_btn.click(
         run_workflow,
@@ -504,4 +539,4 @@ with gr.Blocks(title="AI Researcher Spark") as demo:
 
     gr.Markdown("**注意**：请确保所有 Python 脚本和缓存目录路径正确，且服务器环境已正确配置。")
 
-demo.launch()
+demo.launch(server_name='127.0.0.1', server_port=7860, allowed_paths=['/home/tzh/Project/AI-Researcher-Spark'])
