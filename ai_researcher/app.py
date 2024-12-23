@@ -20,6 +20,8 @@ def display_multiple_json(directory_path):
     从指定目录中读取所有 JSON 文件并将内容显示为 Markdown。
     """
     all_json_content = ""
+    if not os.path.exists(directory_path):
+        return "No passed ideas. Try to increase `batchs per time` or `Run times`"
     
     # 遍历目录中的所有 JSON 文件
     for file_name in os.listdir(directory_path):
