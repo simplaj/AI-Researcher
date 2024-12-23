@@ -288,26 +288,30 @@ def run_workflow(
             yield [log, result_json]
 
             ranking_score_dir = os.path.join(topic_cache_dir, "ranking")
-            cache_names = ["factuality_prompting_method"]  # 可以根据需要动态生成
 
-            for cache_name in cache_names:
-                log += f"**运行** `tournament_ranking.py` **cache_name:** {cache_name}\n"
-                tournament_ranking_cmd = [
-                    "python3", "src/tournament_ranking.py",
-                    "--engine", engine,
-                    "--experiment_plan_cache_dir", project_proposal_cache_dir + '/',
-                    "--cache_name", cache_name,
-                    "--ranking_score_dir", ranking_score_dir,
-                    "--max_round", "5"
-                ]
-                log += f"**运行命令:** `{ ' '.join(tournament_ranking_cmd) }`\n"
+            log += f"**运行** `tournament_ranking.py` **cache_name:** {sanitized_topic}\n"
+            tournament_ranking_cmd = [
+                "python3", "src/tournament_ranking.py",
+                "--engine", engine,
+                "--experiment_plan_cache_dir", project_proposal_cache_dir + '/',
+                "--cache_name", sanitized_topic,
+                "--ranking_score_dir", ranking_score_dir,
+                "--max_round", "5"
+            ]
+            log += f"**运行命令:** `{ ' '.join(tournament_ranking_cmd) }`\n"
+            yield [log, result_json]
+
+            for line in execute_command(tournament_ranking_cmd, env=env):
+                log += line
                 yield [log, result_json]
-
-                for line in execute_command(tournament_ranking_cmd, env=env):
-                    log += line
-                    yield [log, result_json]
-            
+        
             log += "**点子排名完成。**\n\n"
+            # 加载 JSON 数据
+            with open(os.path.join(ranking_score_dir, f'{sanitized_topic}', 'top_ideas.json'), 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+
+            # 将 JSON 数据转换为字符串并嵌入代码块中
+            result_json = f"```json\n{json.dumps(json_data, indent=4)}\n```"
             yield [log, result_json]
     else:
         log += "### 步骤 5: 点子排名（Project Proposal Ranking）已跳过。\n\n"
