@@ -410,7 +410,8 @@ with gr.Blocks() as demo:
             gr.Markdown("## 执行日志")
             # 使用 Markdown 组件以支持丰富的文本格式
             output = gr.Markdown(
-                value=""
+                value="",
+                height=900
             )
 
     run_workflow_btn.click(
