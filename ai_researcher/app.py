@@ -1,3 +1,4 @@
+import json
 import gradio as gr
 import subprocess
 import os
@@ -38,6 +39,7 @@ def run_workflow(
     使用生成器函数实时输出日志和更新进度。
     """
     log = ""  # 用于累积日志
+    result_json = ""
     # 计算总步骤数
     total_steps = sum([run_lit_review, run_idea_gen, run_dedup, run_proposal_gen, run_proposal_ranking, run_proposal_filtering])
     current_step = 0
@@ -74,7 +76,7 @@ def run_workflow(
     # 步骤 1: 文献综述
     if run_lit_review:
         current_step += 1
-        progress_percentage = (current_step / total_steps) * 100
+        progress_percentage = (current_step / total_steps)
         progress(progress_percentage)
         log += "### 步骤 1: 文献综述（Literature Review）\n"
         lit_review_cmd = [
@@ -88,28 +90,33 @@ def run_workflow(
         if print_all:
             lit_review_cmd.append("--print_all")
         log += f"**运行命令:** `{ ' '.join(lit_review_cmd) }`\n"
-        yield log
+        yield [log, result_json]
         for line in execute_command(lit_review_cmd, env=env):
             log += line
-            yield log
+            yield [log, result_json]
         log += "**文献综述完成。**\n\n"
-        yield log
+        # 加载 JSON 数据
+        with open(paper_cache, 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+
+        # 将 JSON 数据转换为字符串并嵌入代码块中
+        result_json = f"```json\n{json.dumps(json_data, indent=4)}\n```"
     else:
         log += "### 步骤 1: 文献综述（Literature Review）已跳过。\n\n"
-        yield log
+        yield [log, result_json]
 
     # 步骤 2: 生成有依据的创意
     if run_idea_gen:
         # 检查依赖
         if not run_lit_review and not os.path.exists(paper_cache):
             log += "**⚠️ 跳过步骤 2，因为步骤 1 未运行且缺少必要的文献综述缓存文件。**\n\n"
-            yield log
+            yield [log, result_json]
         else:
             current_step += 1
-            progress_percentage = (current_step / total_steps) * 100
+            progress_percentage = (current_step / total_steps)
             progress(progress_percentage)
             log += "### 步骤 2: 生成有依据的创意（Grounded Idea Generation）\n"
-            yield log
+            yield [log, result_json]
             for seed in range(1, seeds + 1):
                 for method in [m.strip() for m in methods.split(',')]:
                     for rag in [r.strip() for r in rag_values.split(',')]:
@@ -126,28 +133,34 @@ def run_workflow(
                             "--RAG", rag
                         ]
                         log += f"**运行命令:** `{ ' '.join(grounded_idea_cmd) }`\n"
-                        yield log
+                        yield [log, result_json]
                         for line in execute_command(grounded_idea_cmd, env=env):
                             log += line
-                            yield log
+                            yield [log, result_json]
             log += "**生成有依据的创意完成。**\n\n"
-            yield log
+            # 加载 JSON 数据
+            with open(idea_cache, 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+
+            # 将 JSON 数据转换为字符串并嵌入代码块中
+            result_json = f"```json\n{json.dumps(json_data, indent=4)}\n```"
+            yield [log, result_json]
     else:
         log += "### 步骤 2: 生成有依据的创意（Grounded Idea Generation）已跳过。\n\n"
-        yield log
+        yield [log, result_json]
 
     # 步骤 3: 创意去重
     if run_dedup:
         # 检查依赖
         if not run_idea_gen and not os.path.exists(idea_cache):
             log += "**⚠️ 跳过步骤 3，因为步骤 2 未运行且缺少必要的创意缓存文件。**\n\n"
-            yield log
+            yield [log, result_json]
         else:
             current_step += 1
-            progress_percentage = (current_step / total_steps) * 100
+            progress_percentage = (current_step / total_steps)
             progress(progress_percentage)
             log += "### 步骤 3: 创意去重（Idea Deduplication）\n"
-            yield log
+            yield [log, result_json]
 
             # 分析语义相似性
             log += f"**运行** `analyze_ideas_semantic_similarity.py` **主题:** {topic}\n"
@@ -158,11 +171,11 @@ def run_workflow(
                 "--save_similarity_matrix"
             ]
             log += f"**运行命令:** `{ ' '.join(analyze_cmd) }`\n"
-            yield log
+            yield [log, result_json]
 
             for line in execute_command(analyze_cmd, env=env):
                 log += line
-                yield log
+                yield [log, result_json]
 
             # 进行去重
             log += f"**运行** `dedup_ideas.py` **主题:** {topic}\n"
@@ -174,30 +187,36 @@ def run_workflow(
                 "--similarity_threshold", str(similarity_threshold)
             ]
             log += f"**运行命令:** `{ ' '.join(dedup_cmd) }`\n"
-            yield log
+            yield [log, result_json]
 
             for line in execute_command(dedup_cmd, env=env):
                 log += line
-                yield log
+                yield [log, result_json]
 
             log += "**创意去重完成。**\n\n"
-            yield log
+            # 加载 JSON 数据
+            with open(os.path.join(dedup_cache_dir, f'{sanitized_topic}.json'), 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+
+            # 将 JSON 数据转换为字符串并嵌入代码块中
+            result_json = f"```json\n{json.dumps(json_data, indent=4)}\n```"
+            yield [log, result_json]
     else:
         log += "### 步骤 3: 创意去重（Idea Deduplication）已跳过。\n\n"
-        yield log
+        yield [log, result_json]
 
     # 步骤 4: 点子生成
     if run_proposal_gen:
         # 检查依赖
         if not run_dedup and not os.path.exists(dedup_cache_dir):
             log += "**⚠️ 跳过步骤 4，因为步骤 3 未运行且缺少必要的去重缓存目录。**\n\n"
-            yield log
+            yield [log, result_json]
         else:
             current_step += 1
-            progress_percentage = (current_step / total_steps) * 100
+            progress_percentage = (current_step / total_steps)
             progress(progress_percentage)
             log += "### 步骤 4: 点子生成（Project Proposal Generation）\n"
-            yield log
+            yield [log, result_json]
 
             experiment_cmd = [
                 "python3", "src/experiment_plan_gen.py",
@@ -210,30 +229,30 @@ def run_workflow(
                 "--method", "prompting"
             ]
             log += f"**运行命令:** `{ ' '.join(experiment_cmd) }`\n"
-            yield log
+            yield [log, result_json]
 
             for line in execute_command(experiment_cmd, env=env):
                 log += line
-                yield log
+                yield [log, result_json]
 
             log += "**点子生成完成。**\n\n"
-            yield log
+            yield [log, result_json]
     else:
         log += "### 步骤 4: 点子生成（Project Proposal Generation）已跳过。\n\n"
-        yield log
+        yield [log, result_json]
 
     # 步骤 5: 点子排名
     if run_proposal_ranking:
         # 检查依赖
         if not run_proposal_gen and not os.path.exists(experiment_plan_cache_dir):
             log += "**⚠️ 跳过步骤 5，因为步骤 4 未运行且缺少必要的点子缓存目录。**\n\n"
-            yield log
+            yield [log, result_json]
         else:
             current_step += 1
-            progress_percentage = (current_step / total_steps) * 100
+            progress_percentage = (current_step / total_steps)
             progress(progress_percentage)
             log += "### 步骤 5: 点子排名（Project Proposal Ranking）\n"
-            yield log
+            yield [log, result_json]
 
             ranking_score_dir = os.path.join(topic_cache_dir, "ranking")
             cache_names = ["factuality_prompting_method"]  # 可以根据需要动态生成
@@ -249,30 +268,30 @@ def run_workflow(
                     "--max_round", "5"
                 ]
                 log += f"**运行命令:** `{ ' '.join(tournament_ranking_cmd) }`\n"
-                yield log
+                yield [log, result_json]
 
                 for line in execute_command(tournament_ranking_cmd, env=env):
                     log += line
-                    yield log
+                    yield [log, result_json]
             
             log += "**点子排名完成。**\n\n"
-            yield log
+            yield [log, result_json]
     else:
         log += "### 步骤 5: 点子排名（Project Proposal Ranking）已跳过。\n\n"
-        yield log
+        yield [log, result_json]
 
     # 步骤 6: 点子过滤
     if run_proposal_filtering:
         # 检查依赖
         if not run_proposal_ranking and not os.path.exists(os.path.join(ranking_score_dir, "factuality_prompting_method", "round_5.json")):
             log += "**⚠️ 跳过步骤 6，因为步骤 5 未运行且缺少必要的排名分数文件。**\n\n"
-            yield log
+            yield [log, result_json]
         else:
             current_step += 1
-            progress_percentage = (current_step / total_steps) * 100
+            progress_percentage = (current_step / total_steps)
             progress(progress_percentage)
             log += "### 步骤 6: 点子过滤（Project Proposal Filtering）\n"
-            yield log
+            yield [log, result_json]
 
             cache_dir = project_proposal_cache_dir + '/'
             passed_cache_dir = os.path.join(topic_cache_dir, "project_proposals_passed")
@@ -289,23 +308,23 @@ def run_workflow(
                     "--score_file", f"{ranking_score_dir}/{cache_name}/round_5.json"
                 ]
                 log += f"**运行命令:** `{ ' '.join(filter_ideas_cmd) }`\n"
-                yield log
+                yield [log, result_json]
 
                 for line in execute_command(filter_ideas_cmd, env=env):
                     log += line
-                    yield log
+                    yield [log, result_json]
             
             log += "**点子过滤完成。**\n\n"
-            yield log
+            yield [log, result_json]
     else:
         log += "### 步骤 6: 点子过滤（Project Proposal Filtering）已跳过。\n\n"
-        yield log
+        yield [log, result_json]
 
     # 更新进度条到100%
     progress(100)
     # log += "### 工作流程完成。\n"
     # log += "**注意**：点子排名和过滤步骤已跳过。如需执行这些步骤，请手动添加相关脚本和界面组件。"
-    yield log
+    yield [log, result_json]
 
 with gr.Blocks() as demo:
     gr.Markdown("# 科研点子王")
@@ -411,7 +430,12 @@ with gr.Blocks() as demo:
             # 使用 Markdown 组件以支持丰富的文本格式
             output = gr.Markdown(
                 value="",
-                height=900
+                height=600
+            )
+            gr.Markdown("## 点子")
+            res = gr.Markdown(
+                value="",
+                height=400
             )
 
     run_workflow_btn.click(
@@ -436,7 +460,7 @@ with gr.Blocks() as demo:
             similarity_threshold,
             seed_pp
         ],
-        outputs=output
+        outputs=[output, res]
     )
 
     gr.Markdown("**注意**：请确保所有 Python 脚本和缓存目录路径正确，且服务器环境已正确配置。")
