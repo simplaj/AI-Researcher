@@ -1,6 +1,6 @@
 from openai import OpenAI
 import anthropic
-from together import Together
+# from together import Together
 from utils import call_api, shuffle_dict_and_convert_to_string
 import argparse
 import json
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument('--method', type=str, default='prompting', help='either prompting or finetuning')
     parser.add_argument('--grounding_k', type=int, default=10, help='how many papers to use for grounding')
     parser.add_argument('--append_existing_ideas', type=str, default="True", help='whether to append existing ideas to the idea cache')
-    parser.add_argument('--max_tokens', type=int, default=30000, help='max tokens in the output')
+    parser.add_argument('--max_tokens', type=int, default=8192, help='max tokens in the output')
     parser.add_argument('--temperature', type=float, default=1.0, help='temperature in sampling')
     parser.add_argument('--top_p', type=float, default=1.0, help='top p in sampling')
     parser.add_argument('--ideas_n', type=int, default=5, help="how many ideas to generate")
@@ -68,12 +68,13 @@ if __name__ == "__main__":
     ANTH_KEY = keys["anthropic_key"]
     OAI_KEY = keys["api_key"]
     ORG_ID = keys["organization_id"]
+    BASE_URL = keys["base_url"]
     
     if "claude" in args.engine:
         client = anthropic.Anthropic(
             api_key=ANTH_KEY,
         )
-    elif "o1" in args.engine or "gpt" in args.engine:
+    elif "o1" in args.engine or "gpt" in args.engine or "qwen" in args.engine:
         client = OpenAI(
             organization=ORG_ID,
             api_key=OAI_KEY,
