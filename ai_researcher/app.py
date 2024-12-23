@@ -186,7 +186,7 @@ def run_workflow(
         log += "### 步骤 3: 创意去重（Idea Deduplication）已跳过。\n\n"
         yield log
 
-    # 步骤 4: 项目提案生成
+    # 步骤 4: 点子生成
     if run_proposal_gen:
         # 检查依赖
         if not run_dedup and not os.path.exists(dedup_cache_dir):
@@ -196,7 +196,7 @@ def run_workflow(
             current_step += 1
             progress_percentage = (current_step / total_steps) * 100
             progress(progress_percentage)
-            log += "### 步骤 4: 项目提案生成（Project Proposal Generation）\n"
+            log += "### 步骤 4: 点子生成（Project Proposal Generation）\n"
             yield log
 
             experiment_cmd = [
@@ -216,23 +216,23 @@ def run_workflow(
                 log += line
                 yield log
 
-            log += "**项目提案生成完成。**\n\n"
+            log += "**点子生成完成。**\n\n"
             yield log
     else:
-        log += "### 步骤 4: 项目提案生成（Project Proposal Generation）已跳过。\n\n"
+        log += "### 步骤 4: 点子生成（Project Proposal Generation）已跳过。\n\n"
         yield log
 
-    # 步骤 5: 项目提案排名
+    # 步骤 5: 点子排名
     if run_proposal_ranking:
         # 检查依赖
         if not run_proposal_gen and not os.path.exists(experiment_plan_cache_dir):
-            log += "**⚠️ 跳过步骤 5，因为步骤 4 未运行且缺少必要的项目提案缓存目录。**\n\n"
+            log += "**⚠️ 跳过步骤 5，因为步骤 4 未运行且缺少必要的点子缓存目录。**\n\n"
             yield log
         else:
             current_step += 1
             progress_percentage = (current_step / total_steps) * 100
             progress(progress_percentage)
-            log += "### 步骤 5: 项目提案排名（Project Proposal Ranking）\n"
+            log += "### 步骤 5: 点子排名（Project Proposal Ranking）\n"
             yield log
 
             ranking_score_dir = os.path.join(topic_cache_dir, "ranking")
@@ -255,13 +255,13 @@ def run_workflow(
                     log += line
                     yield log
             
-            log += "**项目提案排名完成。**\n\n"
+            log += "**点子排名完成。**\n\n"
             yield log
     else:
-        log += "### 步骤 5: 项目提案排名（Project Proposal Ranking）已跳过。\n\n"
+        log += "### 步骤 5: 点子排名（Project Proposal Ranking）已跳过。\n\n"
         yield log
 
-    # 步骤 6: 项目提案过滤
+    # 步骤 6: 点子过滤
     if run_proposal_filtering:
         # 检查依赖
         if not run_proposal_ranking and not os.path.exists(os.path.join(ranking_score_dir, "factuality_prompting_method", "round_5.json")):
@@ -271,7 +271,7 @@ def run_workflow(
             current_step += 1
             progress_percentage = (current_step / total_steps) * 100
             progress(progress_percentage)
-            log += "### 步骤 6: 项目提案过滤（Project Proposal Filtering）\n"
+            log += "### 步骤 6: 点子过滤（Project Proposal Filtering）\n"
             yield log
 
             cache_dir = project_proposal_cache_dir + '/'
@@ -295,20 +295,20 @@ def run_workflow(
                     log += line
                     yield log
             
-            log += "**项目提案过滤完成。**\n\n"
+            log += "**点子过滤完成。**\n\n"
             yield log
     else:
-        log += "### 步骤 6: 项目提案过滤（Project Proposal Filtering）已跳过。\n\n"
+        log += "### 步骤 6: 点子过滤（Project Proposal Filtering）已跳过。\n\n"
         yield log
 
     # 更新进度条到100%
     progress(100)
     # log += "### 工作流程完成。\n"
-    # log += "**注意**：项目提案排名和过滤步骤已跳过。如需执行这些步骤，请手动添加相关脚本和界面组件。"
+    # log += "**注意**：点子排名和过滤步骤已跳过。如需执行这些步骤，请手动添加相关脚本和界面组件。"
     yield log
 
 with gr.Blocks() as demo:
-    gr.Markdown("# 项目自动化流程可视化界面")
+    gr.Markdown("# 科研点子王")
 
     with gr.Row():
         with gr.Column(scale=1):
@@ -382,25 +382,25 @@ with gr.Blocks() as demo:
                 value=True
             )
 
-            gr.Markdown("## 项目提案生成设置")
+            gr.Markdown("## 点子生成设置")
             seed_pp = gr.Number(
-                label="项目提案生成的种子",
+                label="点子生成的种子",
                 value=2024
             )
             run_proposal_gen = gr.Checkbox(
-                label="运行项目提案生成",
+                label="运行点子生成",
                 value=True
             )
 
-            gr.Markdown("## 项目提案排名设置")
+            gr.Markdown("## 点子排名设置")
             run_proposal_ranking = gr.Checkbox(
-                label="运行项目提案排名",
+                label="运行点子排名",
                 value=False
             )
 
-            gr.Markdown("## 项目提案过滤设置")
+            gr.Markdown("## 点子过滤设置")
             run_proposal_filtering = gr.Checkbox(
-                label="运行项目提案过滤",
+                label="运行点子过滤",
                 value=False
             )
 
