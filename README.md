@@ -9,7 +9,7 @@ Are you ready to revolutionize your research process? Introducing **AI Researche
 AI Researcher Spark takes the research ideation process to a whole new level, building on the original "Research Ideation Agent" pipeline. Whether you're a student brainstorming for your next project or an expert refining innovative ideas, our framework is tailored to provide **detailed project proposals** that are **groundbreaking, executable, and ranked for quality**. 
 
 💡 **Key Features:**
-- Fully compatible with **domestic large language models** (e.g., MOSS, Zhipu GPT, and Qwen) for enhanced accessibility in diverse environments.
+- Fully compatible with **domestic large language models** (e.g., qwen and Doubao) for enhanced accessibility in diverse environments.
 - **Visualized Interface**: A Gradio-powered, easy-to-use GUI that simplifies every step of the research ideation process.
 - Seamless integration with **OpenAI-like APIs** and domestic models for global and local accessibility.
 - Modular pipeline design: Use end-to-end or customize each module as standalone tools.

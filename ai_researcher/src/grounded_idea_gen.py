@@ -74,7 +74,7 @@ if __name__ == "__main__":
         client = anthropic.Anthropic(
             api_key=ANTH_KEY,
         )
-    elif "o1" in args.engine or "gpt" in args.engine or "qwen" in args.engine:
+    elif "o1" in args.engine or "gpt" in args.engine or "qwen" in args.engine or "Doubao" in args.engine:
         client = OpenAI(
             organization=ORG_ID,
             api_key=OAI_KEY,
