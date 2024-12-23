@@ -61,6 +61,15 @@ Setting up AI Researcher Spark is simple! Follow these steps to unleash your res
    pip install -r requirements.txt
    ```
 2. Configure your API keys in `keys.json` for seamless integration with models and APIs.
+   ```json
+   {
+      "api_key": "Your OpenAI-Like API Key",
+      "base_url": "Your Base URL (Optional)",
+      "organization_id": "Your OpenAI Organization ID (Optional)",
+      "s2_key": "Your Semantic Scholar API Key (Optional)",
+      "anthropic_key": "Your Anthropic API Key（Optional)"
+   }
+   ```
 3. Launch the **visualized interface**:
    ```bash
    python app.py
