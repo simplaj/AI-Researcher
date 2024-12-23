@@ -389,8 +389,21 @@ def fresh(cache_dir, topic):
     return download_links_display(link)
 
 with gr.Blocks(title="AI Researcher Spark") as demo:
-    gr.Markdown("# 科研小点子(AI Researcher Spark)")
-
+    with gr.Row():
+        # 左侧放置较小宽度，用于显示 Logo
+        with gr.Column(scale=1, min_width=80):
+            gr.Image(
+                value="sparklogo.png",
+                show_label=False,
+                show_download_button=False,
+                show_fullscreen_button=False,
+                show_share_button=False
+            )
+        # 右侧放置主要内容
+        with gr.Column(scale=9):
+            pass
+    gr.Markdown('''# 科研小点子 (AI Researcher Spark)\n''')
+    
     with gr.Row():
         with gr.Column(scale=1):
             gr.Markdown("## 全局设置(Global setting)")
