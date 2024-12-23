@@ -126,7 +126,7 @@ def run_workflow(
         for line in execute_command(lit_review_cmd, env=env):
             log += line
             yield [log, result_json]
-        log += "**文献综述完成。**\n\n"
+        log += "**文献综述完成(Done!)。**\n\n"
         # 加载 JSON 数据
         with open(paper_cache, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
@@ -134,14 +134,14 @@ def run_workflow(
         # 将 JSON 数据转换为字符串并嵌入代码块中
         result_json = f"```json\n{json.dumps(json_data, indent=4)}\n```"
     else:
-        log += "### 步骤 1: 文献综述（Literature Review）已跳过。\n\n"
+        log += "### 步骤 1: 文献综述已跳过。（Literature Review Skipped）\n\n"
         yield [log, result_json]
 
     # 步骤 2: 生成有依据的科研点子
     if run_idea_gen:
         # 检查依赖
         if not run_lit_review and not os.path.exists(paper_cache):
-            log += "**⚠️ 跳过步骤 2，因为步骤 1 未运行且缺少必要的文献综述缓存文件。**\n\n"
+            log += "**⚠️ 跳过步骤 2，因为步骤 1 未运行且缺少必要的文献综述缓存文件。(Skipped, lack of literature review files produced by step 1.)**\n\n"
             yield [log, result_json]
         else:
             current_step += 1
@@ -169,7 +169,7 @@ def run_workflow(
                         for line in execute_command(grounded_idea_cmd, env=env):
                             log += line
                             yield [log, result_json]
-            log += "**生成有依据的科研点子完成。**\n\n"
+            log += "**生成有依据的科研点子完成(Done!)。**\n\n"
             # 加载 JSON 数据
             with open(idea_cache, 'r', encoding='utf-8') as f:
                 json_data = json.load(f)
@@ -178,14 +178,14 @@ def run_workflow(
             result_json = f"```json\n{json.dumps(json_data, indent=4)}\n```"
             yield [log, result_json]
     else:
-        log += "### 步骤 2: 生成有依据的科研点子（Grounded Idea Generation）已跳过。\n\n"
+        log += "### 步骤 2: 生成有依据的科研点子已跳过。（Grounded Idea Generation Skipped）\n\n"
         yield [log, result_json]
 
     # 步骤 3: 科研点子去重
     if run_dedup:
         # 检查依赖
         if not run_idea_gen and not os.path.exists(idea_cache):
-            log += "**⚠️ 跳过步骤 3，因为步骤 2 未运行且缺少必要的科研点子缓存文件。**\n\n"
+            log += "**⚠️ 跳过步骤 3，因为步骤 2 未运行且缺少必要的科研点子缓存文件。(Skipped, lack of idea files produced by step 2.)**\n\n"
             yield [log, result_json]
         else:
             current_step += 1
@@ -225,7 +225,7 @@ def run_workflow(
                 log += line
                 yield [log, result_json]
 
-            log += "**科研点子去重完成。**\n\n"
+            log += "**科研点子去重完成(Done!)。**\n\n"
             # 加载 JSON 数据
             with open(os.path.join(dedup_cache_dir, f'{sanitized_topic}.json'), 'r', encoding='utf-8') as f:
                 json_data = json.load(f)
@@ -234,14 +234,14 @@ def run_workflow(
             result_json = f"```json\n{json.dumps(json_data, indent=4)}\n```"
             yield [log, result_json]
     else:
-        log += "### 步骤 3: 科研点子去重（Idea Deduplication）已跳过。\n\n"
+        log += "### 步骤 3: 科研点子去重已跳过。（Idea Deduplication Skipped）\n\n"
         yield [log, result_json]
 
     # 步骤 4: 科研计划生成
     if run_proposal_gen:
         # 检查依赖
         if not run_dedup and not os.path.exists(dedup_cache_dir):
-            log += "**⚠️ 跳过步骤 4，因为步骤 3 未运行且缺少必要的去重缓存目录。**\n\n"
+            log += "**⚠️ 跳过步骤 4，因为步骤 3 未运行且缺少必要的去重缓存目录。(Skipped, lack of deduplicate files produced by step 3.)**\n\n"
             yield [log, result_json]
         else:
             current_step += 1
@@ -267,18 +267,18 @@ def run_workflow(
                 log += line
                 yield [log, result_json]
 
-            log += "**科研计划生成完成。**\n\n"
+            log += "**科研计划生成完成(Done!)。**\n\n"
             result_json = display_multiple_json(os.path.join(project_proposal_cache_dir, sanitized_topic))
             yield [log, result_json]
     else:
-        log += "### 步骤 4: 科研计划生成（Project Proposal Generation）已跳过。\n\n"
+        log += "### 步骤 4: 科研计划生成已跳过。（Project Proposal Generation Skipped）\n\n"
         yield [log, result_json]
 
     # 步骤 5: 科研计划排名
     if run_proposal_ranking:
         # 检查依赖
         if not run_proposal_gen and not os.path.exists(experiment_plan_cache_dir):
-            log += "**⚠️ 跳过步骤 5，因为步骤 4 未运行且缺少必要的科研点子缓存目录。**\n\n"
+            log += "**⚠️ 跳过步骤 5，因为步骤 4 未运行且缺少必要的科研点子缓存目录。(Skipped, lack of project proposal files produced by step 4.)**\n\n"
             yield [log, result_json]
         else:
             current_step += 1
@@ -305,7 +305,7 @@ def run_workflow(
                 log += line
                 yield [log, result_json]
         
-            log += "**科研计划排名完成。**\n\n"
+            log += "**科研计划排名完成(Done!)。**\n\n"
             # 加载 JSON 数据
             with open(os.path.join(ranking_score_dir, f'{sanitized_topic}', 'top_ideas.json'), 'r', encoding='utf-8') as f:
                 json_data = json.load(f)
@@ -314,14 +314,14 @@ def run_workflow(
             result_json = f"```json\n{json.dumps(json_data, indent=4)}\n```"
             yield [log, result_json]
     else:
-        log += "### 步骤 5: 科研计划排名（Project Proposal Ranking）已跳过。\n\n"
+        log += "### 步骤 5: 科研计划排名已跳过。（Project Proposal Ranking Skipped）\n\n"
         yield [log, result_json]
 
     # 步骤 6: 科研计划过滤
     if run_proposal_filtering:
         # 检查依赖
         if not run_proposal_ranking and not os.path.exists(os.path.join(ranking_score_dir, sanitized_topic, "round_5.json")):
-            log += "**⚠️ 跳过步骤 6，因为步骤 5 未运行且缺少必要的排名分数文件。**\n\n"
+            log += "**⚠️ 跳过步骤 6，因为步骤 5 未运行且缺少必要的排名分数文件。(Skipped, lack of ranking files produced by step 5.)**\n\n"
             yield [log, result_json]
         else:
             current_step += 1
@@ -349,30 +349,30 @@ def run_workflow(
                 log += line
                 yield [log, result_json]
             
-            log += "**科研计划过滤完成。**\n\n"
+            log += "**科研计划过滤完成(Done!)。**\n\n"
             result_json = display_multiple_json(os.path.join(passed_cache_dir, sanitized_topic))
             yield [log, result_json]
     else:
-        log += "### 步骤 6: 科研计划过滤（Project Proposal Filtering）已跳过。\n\n"
+        log += "### 步骤 6: 科研计划过滤已跳过。（Project Proposal Filtering Skipped）\n\n"
         yield [log, result_json]
 
     # 更新进度条到100%
     progress(100)
-    # log += "### 工作流程完成。\n"
+    # log += "### 工作流程完成(Done!)。\n"
     # log += "**注意**：科研计划排名和过滤步骤已跳过。如需执行这些步骤，请手动添加相关脚本和界面组件。"
     yield [log, result_json]
 
-with gr.Blocks() as demo:
-    gr.Markdown("# 科研点子王")
+with gr.Blocks(title="AI Researcher Spark") as demo:
+    gr.Markdown("# 科研点子王(AI Researcher Spark)")
 
     with gr.Row():
         with gr.Column(scale=1):
-            gr.Markdown("## 全局设置")
+            gr.Markdown("## 全局设置(Global setting)")
 
             api_key = gr.Textbox(
-                label="API Key (可选)",
+                label="API Key (Optional)",
                 type="password",
-                placeholder="输入您的 API Key（如果需要）",
+                placeholder="Input API Key（如果需要）",
                 visible=False
             )
             engine = gr.Textbox(
@@ -380,99 +380,99 @@ with gr.Blocks() as demo:
                 value="qwen-turbo"
             )
             base_cache_dir = gr.Textbox(
-                label="基础缓存目录",
+                label="基础缓存目录(Cache dir)",
                 value="../cache_results_test/",
-                placeholder="例如: ../cache_results_test/"
+                placeholder="e.g.: ../cache_results_test/"
             )
             topic = gr.Textbox(
-                label="主题描述",
+                label="主题描述(Topics)",
                 value="novel prompting methods to improve large language models’ performance on multilingual tasks or low-resource languages and vernacular languages",
                 lines=2
             )
 
-            gr.Markdown("## 文献综述设置")
+            gr.Markdown("## 文献综述设置(Literature review setting)")
             max_paper_bank_size = gr.Number(
-                label="最大论文库大小",
+                label="最大论文库大小(Max paper bank size)",
                 value=50
             )
             print_all = gr.Checkbox(
-                label="打印所有日志",
+                label="打印所有日志(Print all logs)",
                 value=True
             )
             run_lit_review = gr.Checkbox(
-                label="运行文献综述",
+                label="运行文献综述(Need or not)",
                 value=True
             )
 
-            gr.Markdown("## 生成有依据的科研点子设置")
+            gr.Markdown("## 生成有依据的科研点子设置(Grounded idea generation setting)")
             ideas_n = gr.Number(
-                label="科研点子批次数量",
+                label="科研点子批次数量(batchs per time)",
                 value=5
             )
             methods = gr.Textbox(
-                label="方法",
+                label="方法(method)",
                 value="prompting",
-                placeholder="例如: prompting"
+                placeholder="e.g.: prompting"
             )
             rag_values = gr.Textbox(
-                label="RAG 值",
-                value="True,False",
-                placeholder="例如: True,False"
+                label="RAG",
+                value="True",
+                placeholder="e.g.: True,False"
             )
             seeds = gr.Number(
-                label="种子数量",
+                label="种子数量(Run times)",
                 value=2
             )
             run_idea_gen = gr.Checkbox(
-                label="运行生成有依据的科研点子",
+                label="运行生成有依据的科研点子(Need or not)",
                 value=True
             )
 
-            gr.Markdown("## 科研点子去重设置")
+            gr.Markdown("## 科研点子去重设置(Idea deduplication)")
             similarity_threshold = gr.Number(
-                label="相似性阈值",
+                label="相似性阈值(Similarity threshold)",
                 value=0.8
             )
             run_dedup = gr.Checkbox(
-                label="运行科研点子去重",
+                label="运行科研点子去重(Need or not)",
                 value=True
             )
 
-            gr.Markdown("## 科研计划生成设置")
+            gr.Markdown("## 科研计划生成设置(Project proposal generation setting)")
             seed_pp = gr.Number(
-                label="科研计划生成的种子",
+                label="科研计划生成的种子(Seed)",
                 value=2024
             )
             run_proposal_gen = gr.Checkbox(
-                label="运行科研计划生成",
+                label="运行科研计划生成(Need or not)",
                 value=True
             )
 
-            gr.Markdown("## 科研计划排名设置")
+            gr.Markdown("## 科研计划排名设置(Project proposal ranking setting)")
             run_proposal_ranking = gr.Checkbox(
-                label="运行科研计划排名",
+                label="运行科研计划排名(Need or not)",
                 value=False
             )
 
-            gr.Markdown("## 科研计划过滤设置")
+            gr.Markdown("## 科研计划过滤设置(Project proposal filtering setting)")
             run_proposal_filtering = gr.Checkbox(
-                label="运行科研计划过滤",
+                label="运行科研计划过滤(Need or not)",
                 value=False
             )
 
-            run_workflow_btn = gr.Button("运行整个工作流程")
+            run_workflow_btn = gr.Button("运行整个工作流程(RUN)")
 
         with gr.Column(scale=2):
-            gr.Markdown("## 执行日志")
+            gr.Markdown("## 执行日志(Logs)")
             # 使用 Markdown 组件以支持丰富的文本格式
             output = gr.Markdown(
                 value="",
-                height=600
+                height=300
             )
-            gr.Markdown("## 科研点子")
+            gr.Markdown("## 结果(Results)")
             res = gr.Markdown(
                 value="",
-                height=400
+                height=900
             )
 
     run_workflow_btn.click(
