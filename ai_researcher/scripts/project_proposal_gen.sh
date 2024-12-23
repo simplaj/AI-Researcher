@@ -7,7 +7,7 @@ seed=2024
 for cache_name in "${cache_names[@]}"; do
     echo "Running experiment_plan_gen.py with cache_name: $cache_name"
     python3 src/experiment_plan_gen.py \
-    --engine "claude-3-5-sonnet-20240620" \
+    --engine "qwen-turbo" \
     --idea_cache_dir "$idea_cache_dir" \
     --cache_name "$cache_name" \
     --experiment_plan_cache_dir "$project_proposal_cache_dir" \
