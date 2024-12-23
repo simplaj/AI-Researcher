@@ -372,7 +372,8 @@ with gr.Blocks() as demo:
             api_key = gr.Textbox(
                 label="API Key (可选)",
                 type="password",
-                placeholder="输入您的 API Key（如果需要）"
+                placeholder="输入您的 API Key（如果需要）",
+                visible=False
             )
             engine = gr.Textbox(
                 label="Engine",
