@@ -55,6 +55,7 @@ if __name__ == "__main__":
     OAI_KEY = keys["api_key"]
     ORG_ID = keys["organization_id"]
     S2_KEY = keys["s2_key"]
+    BASE_URL = keys["base_url"]
     
     if "claude" in args.engine:
         client = anthropic.Anthropic(
