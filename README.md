@@ -1,4 +1,13 @@
-# 🚀 **AI Research Ideation Enhanced: An Open-Source Framework for Research Idea Generation with Visualized Interface** 🌟
+<p align="center">
+  <img src="./ai_researcher/sparklogo.png" alt="AI Researcher Spark Logo" width="180" />
+</p>
+
+# 🚀 **Litter Spark - AI Research Ideation Enhanced: An Open-Source Framework for Research Idea Generation with Visualized Interface** 🌟
+
+## **News**
+- Online demo available：[spark.simplaj.fun](https://spark.simplaj.fun/)
+
+---
 
 Are you ready to revolutionize your research process? Introducing **AI Researcher Spark**, an upgraded and enhanced version of the research ideation pipeline inspired by Stanford NLP's groundbreaking work. Designed to empower researchers, educators, and students alike, our open-source project seamlessly integrates **domestic large language models** (compatible with OpenAPI-like platforms) and features a **user-friendly, fully visualized interface** for effortless use.
 
@@ -6,9 +15,9 @@ Are you ready to revolutionize your research process? Introducing **AI Researche
 
 ## 🧠 **What is AI Researcher Spark?**
 
-AI Researcher Spark takes the research ideation process to a whole new level, building on the original "Research Ideation Agent" pipeline. Whether you're a student brainstorming for your next project or an expert refining innovative ideas, our framework is tailored to provide **detailed project proposals** that are **groundbreaking, executable, and ranked for quality**. 
+AI Researcher Spark takes the research ideation process to a whole new level, building on the original "Research Ideation Agent" pipeline. Whether you're a student brainstorming for your next project or an expert refining innovative ideas, our framework is tailored to provide **detailed project proposals** that are **groundbreaking, executable, and ranked for quality**.
 
-💡 **Key Features:**
+💡 **Key Features**:
 - Fully compatible with **domestic large language models** (e.g., qwen and Doubao) for enhanced accessibility in diverse environments.
 - **Visualized Interface**: A Gradio-powered, easy-to-use GUI that simplifies every step of the research ideation process.
 - Seamless integration with **OpenAI-like APIs** and domestic models for global and local accessibility.
@@ -67,7 +76,7 @@ Setting up AI Researcher Spark is simple! Follow these steps to unleash your res
       "base_url": "Your Base URL (Optional)",
       "organization_id": "Your OpenAI Organization ID (Optional)",
       "s2_key": "Your Semantic Scholar API Key (Optional)",
-      "anthropic_key": "Your Anthropic API Key（Optional)"
+      "anthropic_key": "Your Anthropic API Key"
    }
    ```
 3. Launch the **visualized interface**:
@@ -90,7 +99,7 @@ Setting up AI Researcher Spark is simple! Follow these steps to unleash your res
 
 ⭐ **Star this repo** to support our open-source initiative!  
 📢 **Spread the word** by sharing this project with your peers, teams, and collaborators.  
-🛠️ **Contribute**: Got ideas for improvement? We welcome pull requests and feedback!  
+🛠️ **Contribute**: Got ideas for improvement? We welcome pull requests and feedback!
 
 ---
 
