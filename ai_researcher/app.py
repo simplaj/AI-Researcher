@@ -14,6 +14,38 @@ def execute_command(command, env=None):
     if process.returncode != 0:
         yield f"**<span style='color:red;'>命令失败，退出代码 {process.returncode}</span>**\n"
 
+
+def display_multiple_json(directory_path):
+    """
+    从指定目录中读取所有 JSON 文件并将内容显示为 Markdown。
+    """
+    all_json_content = ""
+    
+    # 遍历目录中的所有 JSON 文件
+    for file_name in os.listdir(directory_path):
+        if file_name.endswith(".json"):
+            file_path = os.path.join(directory_path, file_name)
+            
+            # 尝试读取 JSON 文件内容
+            with open(file_path, "r", encoding="utf-8") as file:
+                json_content = json.load(file)
+                
+                # 添加文件名作为标题
+                all_json_content += f"#### {file_name}\n"
+                
+                # 将 JSON 转为格式化字符串
+                json_string = json.dumps(json_content, indent=4, ensure_ascii=False)
+                
+                # 添加到 Markdown 中，使用代码块
+                all_json_content += f"```json\n{json_string}\n```\n\n"
+                    
+    # 如果没有任何 JSON 文件
+    if not all_json_content:
+        all_json_content = "未找到任何 JSON 文件。"
+    
+    return all_json_content
+
+
 def run_workflow(
     api_key,
     engine,
@@ -236,6 +268,7 @@ def run_workflow(
                 yield [log, result_json]
 
             log += "**点子生成完成。**\n\n"
+            result_json = display_multiple_json(os.path.join(project_proposal_cache_dir, sanitized_topic))
             yield [log, result_json]
     else:
         log += "### 步骤 4: 点子生成（Project Proposal Generation）已跳过。\n\n"
