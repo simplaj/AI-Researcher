@@ -597,4 +597,4 @@ with gr.Blocks(title="科研小点子（AI Researcher Spark）") as demo:
 
     gr.Markdown("**注意**：请确保所有 Python 脚本和缓存目录路径正确，且服务器环境已正确配置。")
 
-demo.launch(server_name='127.0.0.1', server_port=7861, allowed_paths=['/home/tzh/Project/AI-Researcher-Spark'])
+demo.launch(server_name='127.0.0.1', server_port=7860)
