@@ -412,7 +412,7 @@ def fresh(cache_dir, topic):
 with gr.Blocks(title="科研小点子（AI Researcher Spark）") as demo:
     with gr.Row():
         # 左侧放置较小宽度，用于显示 Logo
-        with gr.Column(scale=1, min_width=80):
+        with gr.Column(scale=1.9, min_width=100):
             gr.Image(
                 value="sparklogo.png",
                 show_label=False,
@@ -421,9 +421,29 @@ with gr.Blocks(title="科研小点子（AI Researcher Spark）") as demo:
                 show_share_button=False
             )
         # 右侧放置主要内容
-        with gr.Column(scale=9):
-            pass
-    gr.Markdown('''# 科研小点子 (AI Researcher Spark)\n''')
+        with gr.Column(scale=5, min_width=320):
+            gr.Image(
+                value="../figures/title.png",
+                show_label=False,
+                show_download_button=False,
+                show_fullscreen_button=False,
+                show_share_button=False
+            )
+        with gr.Column(scale=5.9, min_width=320):
+            gr.Image(
+                value="../figures/overview.png",
+                show_label=False,
+                show_download_button=False,
+                show_fullscreen_button=False,
+                show_share_button=False
+            )
+
+    gr.Markdown('''# 科研小点子 (AI Researcher Spark)\n 
+                [Github: Research Ideation Agent & Human Study by Stanford NLP](https://github.com/NoviScl/AI-Researcher)\n
+                [Arxiv: Can LLMs Generate Novel Research Ideas?
+                        A Large-Scale Human Study with 100+ NLP Researchers](https://arxiv.org/pdf/2409.04109)\n
+                [Github: Litter Spark - AI Research Ideation Enhanced](https://github.com/simplaj/AI-Researcher-Spark)\n
+                ''')
     
     with gr.Row():
         with gr.Column(scale=1):
@@ -577,4 +597,4 @@ with gr.Blocks(title="科研小点子（AI Researcher Spark）") as demo:
 
     gr.Markdown("**注意**：请确保所有 Python 脚本和缓存目录路径正确，且服务器环境已正确配置。")
 
-demo.launch(server_name='127.0.0.1', server_port=7860, allowed_paths=['/home/tzh/Project/AI-Researcher-Spark'])
+demo.launch(server_name='127.0.0.1', server_port=7861, allowed_paths=['/home/tzh/Project/AI-Researcher-Spark'])
