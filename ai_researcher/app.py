@@ -381,8 +381,7 @@ def get_download_links(cache_dir, topic):
     }
     links = {}
     for key, path in files.items():
-        if os.path.exists(path):
-            links[key] = path
+        links[key] = path
     return links
 
 def download_links_display(links):
