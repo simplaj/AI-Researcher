@@ -5,14 +5,21 @@ import os
 
 def execute_command(command, env=None):
     """
-    执行 shell 命令并实时返回输出。
+    执行 shell 命令并同步逐行返回输出（完全单线程，无多进程）。
     """
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
-    for line in process.stdout:
-        yield line
-    process.wait()
-    if process.returncode != 0:
-        yield f"**<span style='color:red;'>命令失败，退出代码 {process.returncode}</span>**\n"
+    try:
+        # 同步执行命令并捕获输出
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env, check=False)
+        
+        # 按行返回结果
+        for line in result.stdout.splitlines():
+            yield line
+        
+        # 检查返回码
+        if result.returncode != 0:
+            yield f"**<span style='color:red;'>命令失败，退出代码 {result.returncode}</span>**\n"
+    except Exception as e:
+        yield f"**<span style='color:red;'>执行命令时发生错误: {e}</span>**\n"
 
 
 def display_multiple_json(directory_path):
@@ -21,7 +28,7 @@ def display_multiple_json(directory_path):
     """
     all_json_content = ""
     if not os.path.exists(directory_path):
-        return False
+        return "**<span style='color:red;'>No passed project proposal. Try to detaily describe your `Topics` or increase `batchs per time` and `Run times`</span>**" 
     
     # 遍历目录中的所有 JSON 文件
     for file_name in os.listdir(directory_path):
@@ -381,8 +388,23 @@ def get_download_links(cache_dir, topic):
 def download_links_display(links):
     result = []
     for name, path in links.items():
-        result.append(os.path.abspath(path))
+        result.append(display_file_content(path))
     return result[0], result[1], result[2], result[3]
+
+
+def display_file_content(file_path):
+    """
+    读取并格式化 JSON 文件内容。
+    """
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # 格式化为段落形式
+        formatted_content = f"```json\n{json.dumps(data, indent=4)}\n```"
+        return formatted_content
+    else:
+        return f"**<span style='color:red;'>文件 {file_path} 不存在(File {file_path} dose not exists)。</span>**"
+    
 
 def fresh(cache_dir, topic):
     link = get_download_links(cache_dir, topic)
@@ -513,11 +535,15 @@ with gr.Blocks(title="科研小点子（AI Researcher Spark）") as demo:
                 value="",
                 height=900
             )
-            down_btn = gr.Button("生成下载链接")
-            lit = gr.File(label='文献综述', show_label=True)
-            ideas = gr.File(label='科研点子')
-            idea_dedup = gr.File(label='去重点子')
-            ranking = gr.File(label='科研计划排名')
+            down_btn = gr.Button("展示中间结果(Show Results)")
+            gr.Markdown("## 文献综述(Literature Review)")
+            lit = gr.Markdown(label='文献综述', height=300)
+            gr.Markdown("## 科研点子(Ideas)")
+            ideas = gr.Markdown(label='科研点子', height=300)
+            gr.Markdown("## 去重点子(Ideas Deduplicate)")
+            idea_dedup = gr.Markdown(label='去重点子', height=300)
+            gr.Markdown("## 科研计划排名(Project Proposal Ranking)")
+            ranking = gr.Markdown(label='科研计划排名', height=300)
             
     down_btn.click(
         fresh,
